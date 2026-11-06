@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuatro capas, un mismo mar · Parte 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --s101:#f2cf8f; --s102:#3fe0b8; --s104:#5cbcff; --s111:#ff8c6e; --pac:#ffc35a; --foam:#e8fbff;
+  --ink:#eaf7fb; --muted:#a3c7d3; --glass:rgba(10,50,78,.42); --edge:rgba(170,230,245,.18);
+  --display:"Fraunces", Georgia, serif; --body:"Figtree", "Segoe UI", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.65;-webkit-font-smoothing:antialiased;padding-bottom:120px;overflow-x:hidden;background:#04223d}
+img,video{max-width:100%;display:block}
+:focus-visible{outline:2px solid var(--s102);outline-offset:4px;border-radius:6px}
+.wrap{width:min(1200px,100% - 48px);margin-inline:auto;position:relative}
+h1,h2,h3{font-family:var(--display);font-variation-settings:"SOFT" 100,"WONK" 1;font-weight:700;line-height:1;margin:0;text-wrap:balance}
+p{margin:0;max-width:60ch}
+.label{font-size:.74rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+/* Fondo que se oscurece con la profundidad */
+#abyss{position:fixed;inset:0;z-index:-3;transition:background .3s linear}
+.caustics{position:fixed;inset:-20%;z-index:-2;pointer-events:none;opacity:.22;mix-blend-mode:screen;
+  background:radial-gradient(ellipse 40% 18% at 20% 30%,rgba(140,240,255,.35),transparent 70%),radial-gradient(ellipse 30% 14% at 70% 60%,rgba(140,240,255,.3),transparent 70%),radial-gradient(ellipse 35% 12% at 45% 85%,rgba(140,240,255,.25),transparent 70%);
+  animation:caus 18s ease-in-out infinite alternate}
+@keyframes caus{to{transform:translate(4%,3%) rotate(6deg) scale(1.08)}}
+.bubbles{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.bubbles i{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(220,250,255,.45);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.5),rgba(255,255,255,.04) 60%);animation:rise linear infinite}
+@keyframes rise{to{transform:translate(var(--dx),-115vh)}}
+
+/* Hero */
+.hero{position:relative;min-height:100vh;min-height:100svh;overflow:hidden;display:flex;align-items:center;
+  background:radial-gradient(ellipse 30% 22% at 72% 54%,rgba(255,196,150,.55),transparent 70%),linear-gradient(180deg,#061a33 0%,#0b3a60 38%,#2a8fae 58%,#2f8fae 100%)}
+#hero3d{position:absolute;inset:0;width:100%;height:100%}
+.hero .wrap{z-index:2;padding:90px 0 120px;pointer-events:none}
+.hero .wrap>*{pointer-events:auto}
+.kick{display:inline-flex;gap:10px;align-items:center;padding:7px 16px;border-radius:99px;background:rgba(6,30,52,.5);border:1px solid var(--edge);backdrop-filter:blur(8px);font-size:.8rem;font-weight:600;letter-spacing:.06em}
+.kick b{width:8px;height:8px;border-radius:50%;background:var(--s102);box-shadow:0 0 12px var(--s102);animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.hero h1{font-size:clamp(3.2rem,8.6vw,8rem);font-weight:800;margin:26px 0 22px;max-width:9.5ch;letter-spacing:-.02em;text-shadow:0 6px 40px rgba(2,20,40,.45)}
+.hero h1 em{font-style:italic;font-weight:500;background:linear-gradient(90deg,var(--s102),var(--s101) 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .lead{font-size:1.18rem;max-width:44ch;color:#d5eef5;text-shadow:0 2px 16px rgba(2,20,40,.6)}
+.stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:34px}
+.stat{padding:14px 20px;border-radius:22px;background:var(--glass);border:1px solid var(--edge);backdrop-filter:blur(10px);min-width:150px}
+.stat b{display:block;font-family:var(--display);font-size:2.6rem;line-height:1;font-weight:800}
+.stat span{font-size:.85rem;color:var(--muted)}
+.cue{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:#cfeaf2;text-decoration:none}
+.cue svg{animation:bob 2.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(8px)}}
+
+/* Olas divisoras */
+.waves{position:absolute;left:0;right:0;bottom:-1px;height:90px;z-index:3;pointer-events:none;overflow:hidden}
+.waves svg{position:absolute;bottom:0;width:200%;height:100%}
+.waves .w1{animation:drift 14s linear infinite;opacity:.55}
+.waves .w2{animation:drift 9s linear infinite reverse;opacity:.9}
+@keyframes drift{to{transform:translateX(-50%)}}
+
+/* Secciones */
+section{position:relative;padding:130px 0}
+.rv{opacity:0;transform:translateY(40px);transition:opacity 1s cubic-bezier(.2,.8,.2,1),transform 1s cubic-bezier(.2,.8,.2,1)}
+.rv.in{opacity:1;transform:none}
+.rv.d1{transition-delay:.12s}.rv.d2{transition-delay:.24s}.rv.d3{transition-delay:.36s}
+.h2{font-size:clamp(2.6rem,5.6vw,4.8rem);font-weight:700;letter-spacing:-.015em}
+.h2 em{font-style:italic;font-weight:400;color:var(--c,var(--s102))}
+.intro{margin-top:20px;font-size:1.12rem;color:#cfe6ee}
+
+/* Parte 1: ruta ondulada */
+.recap{margin-top:60px;position:relative}
+.recap svg.path{position:absolute;left:0;top:30px;width:100%;height:260px;overflow:visible}
+.recap svg.path path{stroke-dasharray:6 10;animation:dash 30s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-800}}
+.stops{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;position:relative}
+.stop{padding:26px 24px;border-radius:30px 30px 30px 8px;background:var(--glass);border:1px solid var(--edge);backdrop-filter:blur(10px);transition:transform .5s}
+.stop:nth-child(even){transform:translateY(70px)}
+.stop:hover{transform:translateY(-6px) rotate(-1deg)}
+.stop:nth-child(even):hover{transform:translateY(62px) rotate(1deg)}
+.stop .dot{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:1.3rem;margin-bottom:14px;background:rgba(63,224,184,.15);border:1px solid rgba(63,224,184,.5)}
+.stop.block .dot{background:rgba(255,120,120,.15);border-color:rgba(255,120,120,.6)}
+.stop h3{font-size:1.6rem;margin:4px 0 8px}
+.stop p{font-size:.95rem;color:var(--muted)}
+
+/* Capítulos por estándar */
+.std-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.std.flip .std-head{order:2}
+.code{display:block;font-family:var(--display);font-weight:900;font-size:clamp(5rem,13vw,11rem);line-height:.82;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:2px var(--c);font-variation-settings:"SOFT" 100,"WONK" 1,"opsz" 144;position:relative}
+.code::after{content:attr(data-t);position:absolute;inset:0;color:var(--c);clip-path:inset(var(--fill,100%) 0 0 0);transition:clip-path 1.4s cubic-bezier(.2,.8,.2,1)}
+.in .code::after,.code.in::after{--fill:0%}
+.std h2{font-size:clamp(2rem,4vw,3.3rem);margin-top:18px}
+.std h2 em{font-style:italic;font-weight:400;color:var(--c)}
+.chip{display:inline-flex;align-items:center;gap:8px;margin-top:24px;padding:6px 14px;border-radius:99px;border:1px solid var(--c);color:var(--c);font-size:.8rem;font-weight:600;background:rgba(0,0,0,.15)}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
+.stage{position:relative;aspect-ratio:1/1;max-height:560px;width:100%}
+.stage::before{content:"";position:absolute;inset:8%;border-radius:42% 58% 63% 37%/45% 41% 59% 55%;background:radial-gradient(circle at 40% 40%,color-mix(in srgb,var(--c) 40%,transparent),transparent 70%);filter:blur(10px);animation:morph 12s ease-in-out infinite}
+@keyframes morph{33%{border-radius:60% 40% 35% 65%/55% 60% 40% 45%}66%{border-radius:38% 62% 55% 45%/38% 52% 48% 62%}}
+.stage canvas{position:relative;width:100%;height:100%;display:block}
+.stage .hint{position:absolute;bottom:4%;left:50%;transform:translateX(-50%);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.clip{margin:50px 0 0;position:relative}
+.frame{position:relative;border-radius:26px;overflow:hidden;cursor:zoom-in;border:1px solid color-mix(in srgb,var(--c) 55%,transparent);box-shadow:0 30px 80px rgba(0,8,20,.55),0 0 0 6px rgba(255,255,255,.03),0 0 60px color-mix(in srgb,var(--c) 22%,transparent);transform:rotate(-1.2deg);transition:transform .6s cubic-bezier(.2,.8,.2,1);background:linear-gradient(135deg,#0b3a5a,#06243c)}
+.flip .frame,.frame.r{transform:rotate(1.2deg)}
+.frame:hover{transform:rotate(0) scale(1.01)}
+.frame video{width:100%;aspect-ratio:16/9;object-fit:cover}
+.frame .live{position:absolute;top:14px;left:14px;padding:4px 12px;border-radius:99px;background:rgba(4,24,42,.75);backdrop-filter:blur(6px);font-size:.72rem;font-weight:600}
+.frame .live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff5d6c;margin-right:7px;vertical-align:1px;animation:pulse 1.6s infinite}
+figcaption{margin-top:16px;font-size:.85rem;color:var(--muted);padding-left:6px}
+
+/* Ecuación S-104 */
+.eq{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:30px}
+.eq .t{padding:14px 18px;border-radius:20px;background:var(--glass);border:1px solid var(--edge);text-align:center;min-width:130px}
+.eq .t b{display:block;font-family:var(--display);font-size:2rem;line-height:1.1;font-weight:700}
+.eq .t small{font-size:.75rem;color:var(--muted)}
+.eq .op{font-family:var(--display);font-size:2rem;color:var(--muted)}
+.eq .t.res{border-color:var(--s104);box-shadow:0 0 30px rgba(92,188,255,.25)}
+
+/* Cuatro juntas */
+.together{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;margin-top:50px}
+.toggles{display:grid;gap:12px;margin-top:8px}
+.tg{display:flex;align-items:center;gap:16px;padding:14px 18px;border-radius:22px;background:var(--glass);border:1px solid var(--edge);color:var(--ink);font:inherit;text-align:left;cursor:pointer;backdrop-filter:blur(8px);transition:transform .3s,border-color .3s}
+.tg:hover{transform:translateX(6px)}
+.tg[aria-pressed="true"]{border-color:var(--c)}
+.tg .sw{flex:none;width:44px;height:26px;border-radius:99px;background:rgba(255,255,255,.12);position:relative;transition:background .3s}
+.tg .sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
+.tg[aria-pressed="true"] .sw{background:var(--c)}
+.tg[aria-pressed="true"] .sw::after{transform:translateX(18px)}
+.tg b{font-family:var(--display);font-size:1.3rem;color:var(--c);min-width:64px}
+.tg small{display:block;color:var(--muted);font-size:.85rem;line-height:1.3}
+.report{margin-top:26px;border-radius:22px;overflow:hidden;background:rgba(3,20,36,.7);border:1px solid var(--edge);backdrop-filter:blur(10px)}
+.report header{display:flex;justify-content:space-between;padding:10px 18px;font-size:.75rem;color:var(--muted);border-bottom:1px solid var(--edge)}
+.row{display:flex;justify-content:space-between;padding:11px 18px;border-bottom:1px dashed rgba(170,230,245,.12);transition:opacity .4s}
+.row.off{opacity:.25}
+.row.total{border:0;background:rgba(92,188,255,.1);align-items:center}
+.row.total b{font-family:var(--display);font-size:2.2rem;line-height:1}
+.note{margin-top:14px;font-size:.92rem;color:var(--muted)}
+
+/* Pacífico */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:20px}
+.alerts{margin-top:40px;display:grid;gap:10px;max-width:760px}
+.al{display:flex;gap:14px;align-items:center;padding:12px 18px;border-radius:18px;background:var(--glass);border:1px solid var(--edge);font-size:.92rem;opacity:0;transform:translateX(-30px);transition:all .7s cubic-bezier(.2,.8,.2,1)}
+.in .al{opacity:1;transform:none}
+.in .al:nth-child(2){transition-delay:.15s}.in .al:nth-child(3){transition-delay:.3s}.in .al:nth-child(4){transition-delay:.45s}
+.al i{flex:none;font-style:normal;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:99px;letter-spacing:.06em}
+.al .a{background:rgba(255,93,108,.2);color:#ff8a95;border:1px solid #ff5d6c}
+.al .w{background:rgba(255,195,90,.18);color:var(--pac);border:1px solid var(--pac)}
+.al span:last-child{margin-left:auto;color:var(--muted);font-size:.8rem}
+
+/* Cierre */
+.charts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px}
+.card{position:relative;padding:28px;border-radius:32px;background:var(--glass);border:1px solid var(--edge);overflow:hidden;backdrop-filter:blur(10px);transition:transform .5s}
+.card:hover{transform:translateY(-8px)}
+.card svg{width:100%;height:110px;margin-bottom:12px}
+.card h3{font-size:2.1rem}
+.card p{font-size:.95rem;color:var(--muted);margin-top:8px}
+.card .sea{position:absolute;top:22px;right:22px;font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:99px;border:1px solid var(--edge)}
+.final{text-align:center;padding:150px 0 110px}
+.final h2{font-size:clamp(3rem,7.5vw,6.6rem);font-weight:800;max-width:13ch;margin:24px auto 0}
+.final h2 em{font-style:italic;font-weight:400;background:linear-gradient(90deg,var(--s104),var(--s102));-webkit-background-clip:text;background-clip:text;color:transparent}
+.final p{margin:26px auto 0;color:#cfe6ee}
+.compass{width:120px;height:120px;margin:0 auto;animation:spin 60s linear infinite;opacity:.85}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sign{margin-top:36px;display:flex;justify-content:center;flex-wrap:wrap;gap:12px}
+.sign span{padding:6px 16px;border-radius:99px;border:1px solid var(--edge);font-size:.8rem;color:var(--muted)}
+
+/* Peces decorativos */
+.fish{position:absolute;pointer-events:none;opacity:.35;animation:swim linear infinite}
+@keyframes swim{from{transform:translateX(-15vw) scaleX(var(--f,1))}to{transform:translateX(115vw) scaleX(var(--f,1))}}
+
+/* Medidor de profundidad */
+.depth{position:fixed;right:18px;top:50%;transform:translateY(-50%);z-index:20;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.depth .bar{width:3px;height:180px;border-radius:3px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
+.depth .bar i{position:absolute;left:0;right:0;top:0;height:0;background:linear-gradient(var(--s102),var(--s104));border-radius:3px}
+.depth b{font-family:var(--display);font-size:1.05rem;font-weight:600}
+.depth span{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);writing-mode:vertical-rl}
+
+/* Ruta inferior con el buque compañero */
+.voyage{position:fixed;left:0;right:0;bottom:0;height:116px;z-index:30;background:linear-gradient(180deg,transparent,rgba(2,16,30,.78) 55%);pointer-events:none}
+#voy3d{position:absolute;inset:0;width:100%;height:100%}
+.stations{position:absolute;inset:0}
+.st{position:absolute;bottom:0;transform:translateX(-50%);pointer-events:auto;background:none;border:0;color:var(--muted);font:600 .62rem/1 var(--body);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;padding:6px 4px;transition:color .3s,transform .3s;white-space:nowrap}
+.st.on{color:var(--c,#fff);transform:translateX(-50%) scale(1.15)}
+.now{position:absolute;top:0;left:50%;transform:translateX(-50%);font-family:var(--display);font-style:italic;font-size:.95rem;color:#fff;opacity:.9;white-space:nowrap}
+
+dialog{border:0;padding:0;background:transparent;max-width:min(1400px,96vw);width:100%}
+dialog::backdrop{background:rgba(1,10,20,.9);backdrop-filter:blur(6px)}
+dialog video{width:100%;border-radius:18px}
+dialog button{position:absolute;top:-48px;right:0;background:rgba(255,255,255,.08);border:1px solid var(--edge);color:var(--ink);font:inherit;padding:6px 16px;border-radius:99px;cursor:pointer}
+
+.nogl .stage canvas,.nogl #voy3d{display:none}
+
+@media (max-width:900px){
+  .std-grid,.together,.duo{grid-template-columns:1fr}
+  .std.flip .std-head{order:0}
+  .stops{grid-template-columns:1fr 1fr}
+  .stop:nth-child(even){transform:translateY(40px)}
+  .charts{grid-template-columns:1fr}
+  .recap svg.path,.depth{display:none}
+  section{padding:96px 0}
+  .stage{max-height:420px}
+  .st{font-size:0;padding:14px 6px}
+  .st.on{font-size:.62rem}
+}
+.hero-m{}
+@media (max-width:900px){.hero .wrap{padding-top:250px}.cue{display:none}}
+@media (max-width:520px){.stops{grid-template-columns:1fr}.stop:nth-child(even){transform:none}.hero h1{font-size:3rem}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}.rv,.al{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="abyss"></div><div class="caustics"></div><div class="bubbles" id="bubbles"></div>
+
+<div class="depth" aria-hidden="true"><span>profundidad</span><div class="bar"><i id="dbar"></i></div><b id="dval">0 m</b></div>
+
+<header class="hero" id="inicio" data-station="0">
+  <canvas id="hero3d" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <span class="kick rv"><b></b>Futuro S-100 en Colombia · Parte 2</span>
+    <h1 class="rv d1">Cuatro capas, <em>un mismo mar</em></h1>
+    <p class="lead rv d2">En la primera parte construimos nuestra propia carta S-101 y llevamos las corrientes a S-111. Desde entonces sumamos el nivel del mar y la batimetría, y las cuatro capas ya navegan juntas en ShoreECDIS.</p>
+    <div class="stats rv d3">
+      <div class="stat"><b data-count="4">0</b><span>productos S-100<br>en un mismo entorno</span></div>
+      <div class="stat"><b data-count="3">0</b><span>cartas S-101<br>propias</span></div>
+      <div class="stat"><b data-count="2">0</b><span>océanos:<br>Caribe y Pacífico</span></div>
+    </div>
+  </div>
+  <a class="cue" href="#antes">Zarpar<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v15M6 13l6 6 6-6"/></svg></a>
+  <div class="waves" aria-hidden="true">
+    <svg class="w1" viewBox="0 0 2400 90" preserveAspectRatio="none"><path fill="#0b4a70" d="M0 40 Q150 10 300 40 T600 40 T900 40 T1200 40 T1500 40 T1800 40 T2100 40 T2400 40 V90 H0Z"/></svg>
+    <svg class="w2" viewBox="0 0 2400 90" preserveAspectRatio="none"><path fill="#09426a" d="M0 55 Q200 25 400 55 T800 55 T1200 55 T1600 55 T2000 55 T2400 55 V90 H0Z"/></svg>
+  </div>
+</header>
+
+<main>
+<section id="antes" data-station="1">
+  <div class="wrap">
+    <p class="label rv">Bitácora · Parte 1</p>
+    <h2 class="h2 rv d1">Dónde <em>echamos el ancla</em></h2>
+    <p class="intro rv d2">Así terminaba el primer capítulo de esta travesía.</p>
+    <div class="recap">
+      <svg class="path" viewBox="0 0 1200 260" preserveAspectRatio="none" aria-hidden="true"><path d="M0 90 C150 10 300 200 450 120 S750 20 900 150 S1100 220 1200 120" fill="none" stroke="rgba(170,230,245,.35)" stroke-width="2"/></svg>
+      <div class="stops">
+        <article class="stop rv"><div class="dot">〰</div><span class="label">S-111</span><h3>Corrientes</h3><p>El pronóstico pasó de NetCDF a HDF5 y a S-111, y se validó en un entorno ECDIS.</p></article>
+        <article class="stop block rv d1"><div class="dot">⚓</div><span class="label">S-104</span><h3>El bloqueo</h3><p>El nivel del mar necesita una carta base S-101 para mostrarse. No la teníamos.</p></article>
+        <article class="stop rv d2"><div class="dot">⚙</div><span class="label">S-57 → S-101</span><h3>Desarrollo propio</h3><p>Extracción, reglas S-101 y compilación ISO 8211 por ingeniería inversa.</p></article>
+        <article class="stop rv d3"><div class="dot">⛵</div><span class="label">Pilotos</span><h3>Cartagena y Barranquilla</h3><p>Las dos primeras cartas S-101 propias, probadas en ShoreECDIS.</p></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="std" id="s101" data-station="2" style="--c:var(--s101)">
+  <div class="wrap std-grid">
+    <div class="std-head rv">
+      <span class="code" data-t="S-101">S-101</span>
+      <h2>La carta, <em>hecha en casa</em></h2>
+      <p class="intro">Es la carta náutica electrónica: la superficie sobre la que se despliegan todas las demás capas. La obtenemos desde S-57 con un pipeline propio de extracción, reglas S-101 y compilación ISO 8211.</p>
+      <span class="chip">Carta náutica electrónica</span>
+    </div>
+    <div class="stage rv d1"><canvas id="c101" aria-hidden="true"></canvas><span class="hint">Carta · isla · faro</span></div>
+  </div>
+  <div class="wrap"><figure class="clip rv"><div class="frame" data-src="media/s101_cartagena.mp4"><span class="live">ShoreECDIS 2.1.0</span><video src="media/s101_cartagena.mp4" poster="media/s101_cartagena.jpg" muted loop playsinline preload="none"></video></div><figcaption>Carta S-101 propia · Bahía de Cartagena</figcaption></figure></div>
+</section>
+
+<section class="std flip" id="s102" data-station="3" style="--c:var(--s102)">
+  <svg class="fish" style="top:12%;width:70px;animation-duration:38s" viewBox="0 0 60 30" aria-hidden="true"><path d="M5 15 Q25 0 45 15 Q25 30 5 15Z M45 15 L58 5 L58 25Z" fill="#9ff3e0"/></svg>
+  <div class="wrap std-grid">
+    <div class="std-head rv">
+      <span class="code" data-t="S-102">S-102</span>
+      <h2>El fondo, <em>en alta definición</em></h2>
+      <p class="intro">La batimetría describe el fondo con una grilla de profundidades más fina que la de la carta. En ShoreECDIS aparece como un relieve sombreado bajo los símbolos, y cada celda se puede consultar.</p>
+      <span class="chip">Batimetría de superficie</span>
+    </div>
+    <div class="stage rv d1"><canvas id="c102" aria-hidden="true"></canvas><span class="hint">Relieve del fondo · sonar</span></div>
+  </div>
+  <div class="wrap"><figure class="clip rv"><div class="frame r" data-src="media/capas_consulta.mp4"><span class="live">ShoreECDIS 2.1.0</span><video src="media/capas_consulta.mp4" poster="media/capas_consulta.jpg" muted loop playsinline preload="none"></video></div><figcaption>S-101 + S-102 + S-104 · consulta de un punto</figcaption></figure></div>
+</section>
+
+<section class="std" id="s104" data-station="4" style="--c:var(--s104)">
+  <div class="wrap std-grid">
+    <div class="std-head rv">
+      <span class="code" data-t="S-104">S-104</span>
+      <h2>El agua <em>sube y baja</em></h2>
+      <p class="intro">El nivel del mar fue el bloqueo de la Parte 1: necesitaba una carta S-101 para mostrarse. Con nuestra carta como base, el pronóstico ya tiene dónde desplegarse, y el sistema lo combina con la batimetría.</p>
+      <div class="eq" id="eq">
+        <div class="t"><b data-num="23.37">0,00</b><small>m · profundidad S-102</small></div><span class="op">+</span>
+        <div class="t"><b data-num="0.04">0,00</b><small>m · nivel S-104</small></div><span class="op">=</span>
+        <div class="t res"><b data-num="23.41">0,00</b><small>m · profundidad ajustada</small></div>
+      </div>
+      <p class="note">Valores de una consulta real en ShoreECDIS sobre la Bahía de Cartagena.</p>
+    </div>
+    <div class="stage rv d1"><canvas id="c104" aria-hidden="true"></canvas><span class="hint">Marea · mareógrafo · boya</span></div>
+  </div>
+</section>
+
+<section class="std flip" id="s111" data-station="5" style="--c:var(--s111)">
+  <svg class="fish" style="top:70%;width:46px;--f:-1;animation-duration:30s;animation-direction:reverse" viewBox="0 0 60 30" aria-hidden="true"><path d="M5 15 Q25 0 45 15 Q25 30 5 15Z M45 15 L58 5 L58 25Z" fill="#ffc2b0"/></svg>
+  <div class="wrap std-grid">
+    <div class="std-head rv">
+      <span class="code" data-t="S-111">S-111</span>
+      <h2>Corrientes <em>que se mueven</em></h2>
+      <p class="intro">Las corrientes superficiales pasan del modelo en NetCDF a HDF5 y a S-111. Con la línea de tiempo de ShoreECDIS recorremos el pronóstico en pasos de tres horas y vemos cómo cambian sobre la bahía.</p>
+      <span class="chip">Corrientes de superficie</span>
+    </div>
+    <div class="stage rv d1"><canvas id="c111" aria-hidden="true"></canvas><span class="hint">Campo de corrientes</span></div>
+  </div>
+  <div class="wrap"><figure class="clip rv"><div class="frame r" data-src="media/corrientes.mp4"><span class="live">ShoreECDIS 2.1.0</span><video src="media/corrientes.mp4" poster="media/corrientes.jpg" muted loop playsinline preload="none"></video></div><figcaption>Pronóstico S-111 · Bahía de Cartagena · pasos de 3 horas</figcaption></figure></div>
+</section>
+
+<section id="juntas" data-station="6" style="--c:var(--foam)">
+  <div class="wrap">
+    <p class="label rv">Interoperabilidad</p>
+    <h2 class="h2 rv d1">Cuatro capas, <em>un mismo entorno</em></h2>
+    <p class="intro rv d2">Cada producto conserva su estructura y el sistema los combina en una sola vista. Enciende y apaga las capas para ver qué aporta cada una a la consulta.</p>
+    <div class="together">
+      <div class="stage rv" style="--c:var(--s104)"><canvas id="cAll" aria-hidden="true"></canvas><span class="hint">Punto consultado · Bahía de Cartagena</span></div>
+      <div class="rv d1">
+        <div class="toggles">
+          <button class="tg" type="button" data-l="0" aria-pressed="true" style="--c:var(--s101)"><span class="sw"></span><b>S-101</b><span>Carta base<small>Superficie sobre la que se despliega todo</small></span></button>
+          <button class="tg" type="button" data-l="1" aria-pressed="true" style="--c:var(--s102)"><span class="sw"></span><b>S-102</b><span>Batimetría<small>Profundidad de la celda consultada</small></span></button>
+          <button class="tg" type="button" data-l="2" aria-pressed="true" style="--c:var(--s104)"><span class="sw"></span><b>S-104</b><span>Nivel del mar<small>Altura del agua en ese momento</small></span></button>
+          <button class="tg" type="button" data-l="3" aria-pressed="true" style="--c:var(--s111)"><span class="sw"></span><b>S-111</b><span>Corrientes<small>Dirección y velocidad en superficie</small></span></button>
+        </div>
+        <div class="report" aria-live="polite">
+          <header><span>Pick report · ShoreECDIS</span><span>BahiaCtg_S102_final_2m.h5</span></header>
+          <div class="row" id="rD"><span>depth · S-102</span><span>23,37 m</span></div>
+          <div class="row" id="rW"><span>WLA height · S-104</span><span>+0,04 m</span></div>
+          <div class="row total"><span>Adjusted depth</span><b id="adj">23,41 m</b></div>
+        </div>
+        <p class="note" id="explain"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pacifico" data-station="7" style="--c:var(--pac)">
+  <div class="wrap">
+    <p class="label rv">Tercera carta</p>
+    <h2 class="h2 rv d1">Del Caribe <em>al Pacífico</em></h2>
+    <p class="intro rv d2">Llevamos el mismo pipeline a la Bahía de Buenaventura. Trazamos una ruta y el sistema generó alertas al cruzar el contorno de seguridad y zonas con peligros para la navegación.</p>
+    <div class="duo">
+      <figure class="clip rv"><div class="frame" data-src="media/buenaventura_ruta.mp4"><span class="live">ShoreECDIS 2.1.0</span><video src="media/buenaventura_ruta.mp4" poster="media/buenaventura_ruta.jpg" muted loop playsinline preload="none"></video></div><figcaption>Ruta sobre la carta S-101 de Buenaventura</figcaption></figure>
+      <figure class="clip rv d1"><div class="frame r" data-src="media/buenaventura_alertas.mp4"><span class="live">ShoreECDIS 2.1.0</span><video src="media/buenaventura_alertas.mp4" poster="media/buenaventura_alertas.jpg" muted loop playsinline preload="none"></video></div><figcaption>Monitoreo de ruta y lista de alertas</figcaption></figure>
+    </div>
+    <div class="alerts rv">
+      <div class="al"><i class="a">ALARM</i><span>Crossing safety contour: Depth Area</span><span>11:14:02</span></div>
+      <div class="al"><i class="a">ALARM</i><span>Crossing safety contour: Depth Area</span><span>11:14:11</span></div>
+      <div class="al"><i class="w">WARNING</i><span>Crossing navigational hazard: Sounding</span><span>11:14:19</span></div>
+      <div class="al"><i class="w">WARNING</i><span>Crossing navigational hazard: Lateral Buoy</span><span>11:14:02</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="cierre" data-station="8" style="--c:var(--s102)">
+  <div class="wrap">
+    <p class="label rv">Inventario</p>
+    <h2 class="h2 rv d1">Tres cartas <em>propias</em></h2>
+    <p class="intro rv d2">Todas salieron del mismo pipeline S-57 → S-101, desarrollado en el CIOH con software libre.</p>
+    <div class="charts">
+      <article class="card rv"><span class="sea">Caribe</span><svg viewBox="0 0 200 110" aria-hidden="true"><path d="M0 70 C40 60 50 30 90 40 S140 80 200 55" fill="none" stroke="#f2cf8f" stroke-width="2"/><path d="M0 85 C40 75 60 50 95 58 S150 95 200 75" fill="none" stroke="rgba(92,188,255,.5)" stroke-dasharray="4 5"/><circle cx="90" cy="40" r="5" fill="#3fe0b8"/></svg><span class="label">Piloto 1</span><h3>Cartagena</h3><p>Primera carta. Base de las pruebas con S-102, S-104 y S-111.</p></article>
+      <article class="card rv d1"><span class="sea">Caribe</span><svg viewBox="0 0 200 110" aria-hidden="true"><path d="M0 50 C50 45 80 70 120 50 S170 30 200 40" fill="none" stroke="#f2cf8f" stroke-width="2"/><path d="M0 68 C50 62 85 88 125 68 S172 50 200 58" fill="none" stroke="rgba(92,188,255,.5)" stroke-dasharray="4 5"/><circle cx="120" cy="50" r="5" fill="#3fe0b8"/></svg><span class="label">Piloto 2</span><h3>Barranquilla</h3><p>Segunda carta, resuelta con lo aprendido en Cartagena.</p></article>
+      <article class="card rv d2"><span class="sea" style="color:var(--pac)">Pacífico</span><svg viewBox="0 0 200 110" aria-hidden="true"><path d="M0 40 C30 70 70 30 100 60 S160 40 200 70" fill="none" stroke="#f2cf8f" stroke-width="2"/><path d="M0 58 C32 88 72 48 104 78 S162 58 200 88" fill="none" stroke="rgba(92,188,255,.5)" stroke-dasharray="4 5"/><circle cx="100" cy="60" r="5" fill="#ffc35a"/></svg><span class="label">Piloto 3</span><h3>Buenaventura</h3><p>Primera carta en el Pacífico, probada con rutas y alertas.</p></article>
+    </div>
+  </div>
+  <div class="wrap final">
+    <svg class="compass" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="rgba(170,230,245,.35)"/><circle cx="60" cy="60" r="40" fill="none" stroke="rgba(170,230,245,.2)" stroke-dasharray="2 4"/><path d="M60 6 L68 60 L60 114 L52 60Z" fill="rgba(63,224,184,.8)"/><path d="M6 60 L60 52 L114 60 L60 68Z" fill="rgba(170,230,245,.45)"/><text x="60" y="20" text-anchor="middle" font-size="10" fill="#eaf7fb" font-family="Figtree">N</text></svg>
+    <h2 class="rv">Colombia navega hacia el futuro <em>S-100</em></h2>
+    <p class="rv d1">Empezamos con una conversión. Hoy tenemos cuatro productos que funcionan juntos y tres cartas propias, del Caribe al Pacífico.</p>
+    <div class="sign rv d2"><span>Sección de Oceanografía y Meteorología Operacional · SOMO</span><span>CIOH · DIMAR</span></div>
+  </div>
+</section>
+</main>
+
+<nav class="voyage" aria-label="Recorrido">
+  <canvas id="voy3d" aria-hidden="true"></canvas>
+  <div class="now" id="now">Zarpando</div>
+  <div class="stations" id="stations"></div>
+</nav>
+
+<dialog id="viewer"><button type="button" id="closeV">Cerrar</button><video id="big" controls muted loop playsinline></video></dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* ---------- Estaciones del recorrido ---------- */
+const STATIONS = [
+  {n:'Inicio',  t:'Zarpando',               c:'#e8fbff'},
+  {n:'Parte 1', t:'Bitácora de la Parte 1', c:'#e8fbff'},
+  {n:'S-101',   t:'Carta náutica',          c:css('--s101')},
+  {n:'S-102',   t:'Batimetría',             c:css('--s102')},
+  {n:'S-104',   t:'Nivel del mar',          c:css('--s104')},
+  {n:'S-111',   t:'Corrientes',             c:css('--s111')},
+  {n:'4 en 1',  t:'Las cuatro juntas',      c:'#e8fbff'},
+  {n:'Pacífico',t:'Buenaventura',           c:css('--pac')},
+  {n:'Rumbo',   t:'Rumbo S-100',            c:css('--s102')}
+];
+const secs = $$('[data-station]');
+const stEl = $('#stations');
+const frac = i => .06 + i*(.88/(STATIONS.length-1));
+STATIONS.forEach((s,i)=>{
+  const b=document.createElement('button'); b.className='st'; b.textContent=s.n; b.style.left=(frac(i)*100)+'%'; b.style.setProperty('--c',s.c);
+  b.addEventListener('click',()=>secs[i].scrollIntoView({behavior:reduce?'auto':'smooth'})); stEl.appendChild(b);
+});
+let current=0, onStation=()=>{};
+function pickStation(){
+  let k=0; secs.forEach((s,i)=>{ if(s.getBoundingClientRect().top < innerHeight*.55) k=i; });
+  if(k!==current){ const prev=current; current=k; onStation(prev,k); }
+  $$('.st').forEach((b,i)=>b.classList.toggle('on',i===current));
+  $('#now').textContent = STATIONS[current].t;
+}
+
+/* ---------- Profundidad y fondo ---------- */
+const TOP=['#0b3a5c','#073252','#05243f','#03172b','#010b18'], BOT=['#1d8fa3','#11668a','#0a4467','#062b48','#03182b'];
+const hx=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)), mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+function grad(arr,p){const x=p*(arr.length-1),i=Math.min(arr.length-2,Math.floor(x));return 'rgb('+mix(hx(arr[i]),hx(arr[i+1]),x-i).join(',')+')';}
+function onScroll(){
+  const tot=document.documentElement.scrollHeight-innerHeight, p=tot>0?Math.min(1,scrollY/tot):0;
+  $('#abyss').style.background=`linear-gradient(180deg,${grad(TOP,p)},${grad(BOT,p)})`;
+  $('#dbar').style.height=(p*100)+'%'; $('#dval').textContent=Math.round(p*45)+' m';
+  pickStation();
+}
+addEventListener('scroll',onScroll,{passive:true}); addEventListener('resize',onScroll); onScroll();
+
+/* ---------- Burbujas ---------- */
+const bub=$('#bubbles');
+if(!reduce) for(let i=0;i<22;i++){const e=document.createElement('i');const s=4+Math.random()*16;
+  e.style.cssText=`left:${Math.random()*100}%;width:${s}px;height:${s}px;animation-duration:${12+Math.random()*22}s;animation-delay:${-Math.random()*30}s;--dx:${(Math.random()-.5)*120}px`;bub.appendChild(e);}
+
+/* ---------- Revelado, contadores y ecuación ---------- */
+const fmt=(n,d=2)=>n.toFixed(d).replace('.',',');
+function countUp(el,to,dec){ if(reduce){el.textContent=fmt(to,dec);return;} const t0=performance.now(),D=1400;
+  (function f(now){const p=Math.min(1,(now-t0)/D),e=1-Math.pow(1-p,3);el.textContent=fmt(to*e,dec);if(p<1)requestAnimationFrame(f);})(t0);}
+const io=new IntersectionObserver(es=>es.forEach(e=>{ if(!e.isIntersecting) return; e.target.classList.add('in'); io.unobserve(e.target);
+  e.target.querySelectorAll('[data-count]').forEach(b=>countUp(b,+b.dataset.count,0));
+  e.target.querySelectorAll('[data-num]').forEach(b=>countUp(b,+b.dataset.num,2));
+}),{threshold:.18});
+$$('.rv,.std,#eq,.alerts').forEach(el=>io.observe(el));
+
+/* ---------- Videos ---------- */
+const vio=new IntersectionObserver(es=>es.forEach(e=>{ if(reduce) return; e.isIntersecting? e.target.play().catch(()=>{}) : e.target.pause(); }),{threshold:.3});
+$$('.frame video').forEach(v=>vio.observe(v));
+const dlg=$('#viewer'), big=$('#big');
+$$('.frame').forEach(f=>{ f.tabIndex=0; f.setAttribute('role','button'); f.setAttribute('aria-label','Ver video en grande');
+  const open=()=>{big.src=f.dataset.src; try{dlg.showModal();}catch(e){} big.play().catch(()=>{});};
+  f.addEventListener('click',open); f.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}}); });
+$('#closeV').addEventListener('click',()=>dlg.close()); dlg.addEventListener('close',()=>big.pause());
+
+/* ---------- Consulta interactiva (texto) ---------- */
+const on=[true,true,true,true]; let layerHook=()=>{};
+function renderPick(){
+  $('#rD').classList.toggle('off',!on[1]); $('#rW').classList.toggle('off',!on[2]);
+  const adj=$('#adj'), ex=$('#explain');
+  if(!on[0]){adj.textContent='—';ex.textContent='Sin la carta S-101 no hay superficie donde desplegar ni consultar las demás capas.';}
+  else if(!on[1]){adj.textContent='—';ex.textContent='Sin S-102 la consulta no tiene la profundidad de la celda; quedan solo las sondas de la carta.';}
+  else if(!on[2]){adj.textContent='23,37 m';ex.textContent='Sin S-104 la profundidad queda como la reporta la batimetría, sin el nivel del mar del momento.';}
+  else {adj.textContent='23,41 m';ex.textContent='La profundidad de S-102 se ajusta con el nivel del mar de S-104: 23,37 m + 0,04 m = 23,41 m.'+(on[3]?' S-111 añade la corriente en ese mismo punto.':'');}
+  layerHook();
+}
+$$('.tg').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.l; on[i]=!on[i]; b.setAttribute('aria-pressed',on[i]); renderPick();}));
+renderPick();
+
+/* =================== 3D =================== */
+const T=window.THREE;
+let glOK=!!T; try{ if(T){const c=document.createElement('canvas'); glOK=!!(c.getContext('webgl')||c.getContext('experimental-webgl'));} }catch(e){glOK=false;}
+if(!glOK){document.documentElement.classList.add('nogl'); return;}
+
+const scenes=[];
+function mk(canvas,{fov=35,always=false}={}){
+  const r=new T.WebGLRenderer({canvas,antialias:true,alpha:true}); r.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  const s=new T.Scene(), c=new T.PerspectiveCamera(fov,1,.1,200);
+  s.add(new T.HemisphereLight(0xcdefff,0x04223a,.7));
+  const d=new T.DirectionalLight(0xffe0bd,.85); d.position.set(4,7,5); s.add(d);
+  const o={canvas,r,s,c,always,vis:always,tick:null,onResize:null};
+  o.resize=()=>{const w=canvas.clientWidth,h=canvas.clientHeight; if(!w||!h) return; r.setSize(w,h,false); c.aspect=w/h; c.updateProjectionMatrix(); o.onResize&&o.onResize(w,h);};
+  o.resize(); if(!always) new IntersectionObserver(e=>o.vis=e[0].isIntersecting,{rootMargin:'100px'}).observe(canvas);
+  scenes.push(o); return o;
+}
+const M=(c,o={})=>new T.MeshStandardMaterial(Object.assign({color:c,flatShading:true,roughness:.65,metalness:.05},o));
+function tex(draw,w=512,h=512){const cv=document.createElement('canvas');cv.width=w;cv.height=h;draw(cv.getContext('2d'),w,h);const t=new T.CanvasTexture(cv);t.anisotropy=4;return t;}
+
+/* Buque de baja poligonización (proa hacia +x) */
+function makeShip(){
+  const g=new T.Group(), sh=new T.Shape();
+  sh.moveTo(-.8,-.26); sh.lineTo(.42,-.26); sh.quadraticCurveTo(.82,-.18,.98,0); sh.quadraticCurveTo(.82,.18,.42,.26); sh.lineTo(-.8,.26); sh.lineTo(-.8,-.26);
+  const ext=d=>{const geo=new T.ExtrudeGeometry(sh,{depth:d,bevelEnabled:false}); geo.rotateX(-Math.PI/2); return geo;};
+  const lower=new T.Mesh(ext(.24),M(0x16365c)); g.add(lower);
+  const band=new T.Mesh(ext(.06),M(0xd94f3d)); band.position.y=.24; g.add(band);
+  const deck=new T.Mesh(ext(.1),M(0xf4f7f8)); deck.position.y=.3; deck.scale.set(.97,1,.94); g.add(deck);
+  const add=(geo,mat,x,y,z)=>{const m=new T.Mesh(geo,mat);m.position.set(x,y,z);g.add(m);return m;};
+  add(new T.BoxGeometry(.6,.26,.38),M(0xffffff),-.3,.53,0);
+  add(new T.BoxGeometry(.34,.18,.42),M(0xffffff),-.12,.75,0);
+  add(new T.BoxGeometry(.35,.06,.43),M(0x0e2235),-.12,.78,0);
+  add(new T.CylinderGeometry(.07,.09,.32,10),M(0xff8c6e),-.56,.78,0);
+  add(new T.CylinderGeometry(.012,.012,.5,6),M(0xdddddd),.05,1.02,0);
+  const radar=add(new T.BoxGeometry(.22,.03,.04),M(0xffffff),.05,1.2,0);
+  add(new T.SphereGeometry(.03,8,8),new T.MeshBasicMaterial({color:0x7dffd6}),.05,1.28,0);
+  g.userData.radar=radar; return g;
+}
+function makeBuoy(color){
+  const g=new T.Group();
+  const body=new T.Mesh(new T.CylinderGeometry(.2,.28,.34,12),M(color)); g.add(body);
+  const band=new T.Mesh(new T.CylinderGeometry(.205,.21,.08,12),M(0xffffff)); band.position.y=.05; g.add(band);
+  const top=new T.Mesh(new T.ConeGeometry(.12,.38,10),M(color)); top.position.y=.36; g.add(top);
+  const lamp=new T.Mesh(new T.SphereGeometry(.06,10,10),new T.MeshBasicMaterial({color:0xfff2b0})); lamp.position.y=.6; g.add(lamp);
+  g.userData.lamp=lamp; return g;
+}
+const wave=(x,z,t)=>Math.sin(x*.45+t*.9)*.22+Math.sin(z*.7+t*1.25)*.14+Math.sin((x+z)*1.3+t*2)*.05;
+
+/* Texturas de las capas */
+const LCOL=[0xf2cf8f,0x3fe0b8,0x5cbcff,0xff8c6e];
+function layerTex(i){
+  return tex((g,w,h)=>{
+    if(i===0){ g.fillStyle='#2b7fa8';g.fillRect(0,0,w,h);
+      for(let r=40;r<700;r+=38){g.strokeStyle='rgba(200,240,255,.25)';g.lineWidth=2;g.beginPath();g.ellipse(120,110,r,r*.75,.3,0,7);g.stroke();}
+      [[120,110,95,70],[400,380,70,55],[430,90,40,30]].forEach(([x,y,a,b])=>{g.fillStyle='#f2d49b';g.beginPath();g.ellipse(x,y,a,b,.4,0,7);g.fill();g.strokeStyle='#a7793c';g.lineWidth=3;g.stroke();g.fillStyle='#7cc48a';g.beginPath();g.ellipse(x-8,y-6,a*.5,b*.45,.4,0,7);g.fill();});
+      g.fillStyle='rgba(255,255,255,.75)';g.font='italic 20px Figtree';for(let k=0;k<26;k++)g.fillText((5+Math.random()*30).toFixed(0),40+Math.random()*440,40+Math.random()*440);
+    } else if(i===1){ const st=['#a6fff0','#5ff0cf','#2fc4b0','#1d8f9e','#176a8c','#16487a','#1a2f66'];
+      for(let r=st.length-1;r>=0;r--){g.fillStyle=st[st.length-1-r];g.beginPath();g.ellipse(270,250,80+r*48,60+r*42,.5,0,7);g.fill();}
+    } else if(i===2){ g.fillStyle='rgba(92,188,255,.35)';g.fillRect(0,0,w,h);
+      for(let y=20;y<h;y+=46){g.strokeStyle='rgba(225,245,255,.7)';g.lineWidth=4;g.beginPath();for(let x=0;x<=w;x+=8)g.lineTo(x,y+Math.sin(x/30)*8);g.stroke();}
+    } else { g.fillStyle='rgba(255,140,110,.18)';g.fillRect(0,0,w,h);g.strokeStyle='#ff8c6e';g.fillStyle='#ff8c6e';g.lineWidth=4;
+      for(let y=40;y<h;y+=64)for(let x=40;x<w;x+=64){const a=Math.sin(x/90)+Math.cos(y/110)*.6,l=18+10*Math.sin(x/50+y/70);g.save();g.translate(x,y);g.rotate(a);g.beginPath();g.moveTo(-l,0);g.lineTo(l,0);g.stroke();g.beginPath();g.moveTo(l+8,0);g.lineTo(l-6,-8);g.lineTo(l-6,8);g.fill();g.restore();}
+    }
+    g.fillStyle='rgba(4,20,36,.75)';g.beginPath();g.roundRect?g.roundRect(w-176,h-74,156,54,27):g.rect(w-176,h-74,156,54);g.fill();
+    g.fillStyle='#fff';g.font='700 34px Fraunces, Georgia';g.textAlign='center';g.fillText(['S-101','S-102','S-104','S-111'][i],w-98,h-36);
+  });
+}
+function makeStack(size=3){
+  const grp=new T.Group(), layers=[];
+  for(let i=0;i<4;i++){
+    const side=M(LCOL[i],{transparent:true,opacity:.9});
+    const top=new T.MeshStandardMaterial({map:layerTex(i),transparent:true,opacity:i===0?1:.88,roughness:.5});
+    const m=new T.Mesh(new T.BoxGeometry(size,.05,size),[side,side,top,side,side,side]);
+    const e=new T.LineSegments(new T.EdgesGeometry(m.geometry),new T.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.35}));
+    m.add(e); grp.add(m); layers.push({m,mats:[side,top],show:1,target:1});
+  }
+  return {grp,layers};
+}
+
+/* ----- Hero ----- */
+(function(){
+  const o=mk($('#hero3d'),{fov:40,always:true}); const {s,c}=o;
+  s.fog=new T.Fog(0x2f8fae,12,34);
+  const geo=new T.PlaneGeometry(60,60,70,70); geo.rotateX(-Math.PI/2);
+  const pos=geo.attributes.position, base=pos.array.slice();
+  const sea=new T.Mesh(geo,M(0x0f8aa3,{roughness:.5,metalness:.1})); s.add(sea);
+  const {grp,layers}=makeStack(2.8); s.add(grp);
+  const ship=makeShip(); ship.scale.setScalar(.75); s.add(ship);
+  const buoys=[[css('--s101'),-5,2],[css('--s102'),5.5,-1],[css('--s111'),-2.5,-4]].map(([col,x,z])=>{const b=makeBuoy(new T.Color(col));b.position.set(x,0,z);s.add(b);return b;});
+  let mx=0,my=0; addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5;},{passive:true});
+  let narrow=false; o.onResize=(w,h)=>{narrow=w/h<1; grp.position.set(narrow?0:3.1,narrow?3.0:1.7,narrow?-3:0); grp.scale.setScalar(narrow?.62:1);};
+  o.resize();
+  o.tick=t=>{
+    for(let i=0;i<pos.count;i++){const x=base[i*3],z=base[i*3+2];pos.array[i*3+1]=wave(x,z,t);} pos.needsUpdate=true; geo.computeVertexNormals();
+    const gap=.42+.22*Math.sin(t*.8);
+    layers.forEach((L,i)=>{L.m.position.y=i*gap+Math.sin(t*1.1+i)*.04;});
+    grp.rotation.y=t*.15+mx*.6; grp.rotation.x=.12+my*.15;
+    const a=t*.22, R=narrow?1.7:4.2, x=Math.cos(a)*R+(narrow?0:1.2), z=Math.sin(a)*1.6-(narrow?3:.6); ship.scale.setScalar(narrow?.5:.75);
+    ship.position.set(x,wave(x,z,t)+.02,z); ship.rotation.y=Math.atan2(-Math.cos(a)*1.6,-Math.sin(a)*R); ship.rotation.z=Math.sin(t*1.6)*.05; ship.rotation.x=Math.sin(t*1.2)*.04;
+    ship.userData.radar.rotation.y=t*4;
+    buoys.forEach((b,i)=>{b.position.y=wave(b.position.x,b.position.z,t)-.05;b.rotation.z=Math.sin(t*1.5+i)*.12;b.userData.lamp.material.color.setHSL(.13,1,.6+.3*Math.sin(t*3+i*2));});
+    c.position.set(mx*1.2,2.7-my*.6,9); c.lookAt(narrow?0:1,1.1,0);
+  };
+})();
+
+/* ----- S-101: carta con isla y faro ----- */
+(function(){
+  const o=mk($('#c101')); const {s,c}=o; c.position.set(0,3.6,5.6); c.lookAt(0,.3,0);
+  const g=new T.Group(); s.add(g);
+  const tile=new T.Mesh(new T.BoxGeometry(3.4,.14,3.4),[M(0x1f6f95),M(0x1f6f95),new T.MeshStandardMaterial({map:layerTex(0)}),M(0x1f6f95),M(0x1f6f95),M(0x1f6f95)]); g.add(tile);
+  const isl=new T.Mesh(new T.DodecahedronGeometry(.7,1),M(0xe9c98a)); isl.scale.set(1.1,.32,.9); isl.position.set(-.55,.12,-.6); g.add(isl);
+  const grn=new T.Mesh(new T.DodecahedronGeometry(.45,0),M(0x6dbb7e)); grn.scale.set(1,.45,.9); grn.position.set(-.6,.3,-.62); g.add(grn);
+  for(let k=0;k<4;k++){const seg=new T.Mesh(new T.CylinderGeometry(.11-k*.012,.12-k*.012,.18,12),M(k%2?0xd94f3d:0xffffff)); seg.position.set(-.35,.42+k*.18,-.45); g.add(seg);}
+  const lamp=new T.Mesh(new T.SphereGeometry(.09,12,12),new T.MeshBasicMaterial({color:0xfff1a8})); lamp.position.set(-.35,1.18,-.45); g.add(lamp);
+  const beamG=new T.ConeGeometry(.45,3,20,1,true); beamG.translate(0,-1.5,0); beamG.rotateZ(Math.PI/2);
+  const beam=new T.Mesh(beamG,new T.MeshBasicMaterial({color:0xfff1a8,transparent:true,opacity:.22,side:T.DoubleSide,depthWrite:false,blending:T.AdditiveBlending}));
+  beam.position.copy(lamp.position); g.add(beam);
+  const ship=makeShip(); ship.scale.setScalar(.45); g.add(ship);
+  o.tick=t=>{ g.rotation.y=Math.sin(t*.25)*.5; beam.rotation.y=t*1.4; const a=t*.4; ship.position.set(Math.cos(a)*1.1+.4,.1,Math.sin(a)*1.1+.5); ship.rotation.y=Math.atan2(-Math.cos(a),-Math.sin(a)); ship.userData.radar.rotation.y=t*4; };
+})();
+
+/* ----- S-102: relieve del fondo y sonar ----- */
+(function(){
+  const o=mk($('#c102')); const {s,c}=o; c.position.set(0,3.4,5.2); c.lookAt(0,-.5,0);
+  const g=new T.Group(); s.add(g);
+  const geo=new T.PlaneGeometry(3.6,3.6,70,70); geo.rotateX(-Math.PI/2);
+  const p=geo.attributes.position, cols=[], ramp=['#7ff0dc','#3fd6bd','#22a9a6','#1a7f96','#175f86','#173f73','#1a2a5c'].map(h=>new T.Color(h));
+  for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);
+    const h=-(.55+.38*Math.sin(x*1.3)*Math.cos(z*1.1)+.22*Math.sin(x*2.7+z*1.9)+.1*Math.cos(z*4.1)-.35*Math.exp(-((x+.3)**2)*3));
+    p.setY(i,h); const k=Math.min(.999,Math.max(0,(-h-.05)/1.3))*(ramp.length-1), j=Math.floor(k), col=ramp[j].clone().lerp(ramp[j+1],k-j); cols.push(col.r,col.g,col.b);}
+  geo.setAttribute('color',new T.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
+  g.add(new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:.8})));
+  g.add(new T.Mesh(geo,new T.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:.07})));
+  const ship=makeShip(); ship.scale.setScalar(.42); ship.position.y=.55; g.add(ship);
+  const coneG=new T.ConeGeometry(.55,1.6,28,1,true); coneG.translate(0,-.8,0);
+  const sonar=new T.Mesh(coneG,new T.MeshBasicMaterial({color:0x3fe0b8,transparent:true,opacity:.18,side:T.DoubleSide,depthWrite:false,blending:T.AdditiveBlending})); g.add(sonar);
+  const ring=new T.Mesh(new T.RingGeometry(.2,.26,40),new T.MeshBasicMaterial({color:0x3fe0b8,transparent:true,side:T.DoubleSide,depthWrite:false})); ring.rotation.x=-Math.PI/2; g.add(ring);
+  o.tick=t=>{ g.rotation.y=t*.12; const x=Math.sin(t*.35)*1.3; ship.position.x=x; ship.rotation.y=Math.cos(t*.35)>0?0:Math.PI; sonar.position.set(x,.55,0);
+    sonar.material.opacity=.1+.12*(.5+.5*Math.sin(t*4)); const q=(t*.8)%1; ring.position.set(x,-.6,0); ring.scale.setScalar(1+q*4); ring.material.opacity=.6*(1-q); ship.userData.radar.rotation.y=t*4; };
+})();
+
+/* ----- S-104: marea, mareógrafo y boya ----- */
+(function(){
+  const o=mk($('#c104')); const {s,c}=o; c.position.set(3.4,2.6,4.6); c.lookAt(0,.5,0);
+  const g=new T.Group(); s.add(g);
+  const bed=new T.Mesh(new T.BoxGeometry(3,.25,3),M(0xe9c98a)); bed.position.y=-.12; g.add(bed);
+  const wGeo=new T.BoxGeometry(2.96,1,2.96); wGeo.translate(0,.5,0);
+  const water=new T.Mesh(wGeo,new T.MeshStandardMaterial({color:0x5cbcff,transparent:true,opacity:.5,roughness:.2,metalness:.1})); g.add(water);
+  const pole=new T.Mesh(new T.BoxGeometry(.12,2.4,.12),M(0xffffff)); pole.position.set(-.9,1.2,-.9); g.add(pole);
+  for(let k=0;k<12;k++){const tk=new T.Mesh(new T.BoxGeometry(k%4?.1:.2,.02,.14),M(0x0e2235)); tk.position.set(-.82+(k%4?0:.05),.2+k*.18,-.9); g.add(tk);}
+  const pier=new T.Mesh(new T.BoxGeometry(1.4,.08,.4),M(0x9a6b45)); pier.position.set(-.4,2.0,-.9); g.add(pier);
+  const buoy=makeBuoy(new T.Color(0xffc35a)); buoy.scale.setScalar(.9); buoy.position.set(.6,0,.4); g.add(buoy);
+  const ship=makeShip(); ship.scale.setScalar(.38); g.add(ship);
+  o.tick=t=>{ const h=1.05+.38*Math.sin(t*.7); water.scale.y=h; buoy.position.y=h-.08+Math.sin(t*2)*.03; buoy.rotation.z=Math.sin(t*1.7)*.15; buoy.userData.lamp.material.color.setHSL(.13,1,.55+.35*Math.sin(t*3));
+    ship.position.set(.3+Math.sin(t*.3)*.5,h-.02,.95); ship.rotation.y=Math.cos(t*.3)>0?0:Math.PI; g.rotation.y=Math.sin(t*.2)*.35; };
+})();
+
+/* ----- S-111: campo de corrientes ----- */
+(function(){
+  const o=mk($('#c111')); const {s,c}=o; c.position.set(0,4.2,4.4); c.lookAt(0,0,0);
+  const g=new T.Group(); s.add(g);
+  const base=new T.Mesh(new T.BoxGeometry(3.6,.08,3.6),M(0x0b3d63,{transparent:true,opacity:.75})); base.position.y=-.06; g.add(base);
+  const N=170, cg=new T.ConeGeometry(.035,.18,6); cg.rotateZ(-Math.PI/2);
+  const inst=new T.InstancedMesh(cg,new T.MeshStandardMaterial({roughness:.4}),N); g.add(inst);
+  const P=[...Array(N)].map(()=>({x:(Math.random()-.5)*3.4,z:(Math.random()-.5)*3.4,age:Math.random()*6}));
+  const dmy=new T.Object3D(), col=new T.Color(), cA=new T.Color(0xff8c6e), cB=new T.Color(0xffe08a);
+  const field=(x,z,t)=>[Math.cos(z*1.2+t*.2)*.55+.45, Math.sin(x*1.1+t*.15)*.5];
+  const ship=makeShip(); ship.scale.setScalar(.4); g.add(ship);
+  let last=0;
+  o.tick=t=>{ const dt=Math.min(.05,t-last); last=t;
+    P.forEach((q,i)=>{const [vx,vz]=field(q.x,q.z,t); q.x+=vx*dt*.6; q.z+=vz*dt*.6; q.age+=dt;
+      if(q.x>1.75||q.x<-1.75||q.z>1.75||q.z<-1.75||q.age>6){q.x=-1.7+Math.random()*.6;q.z=(Math.random()-.5)*3.4;q.age=0;}
+      const sp=Math.hypot(vx,vz); dmy.position.set(q.x,.06,q.z); dmy.rotation.set(0,Math.atan2(-vz,vx),0); dmy.scale.setScalar(.5+sp*.5); dmy.updateMatrix(); inst.setMatrixAt(i,dmy.matrix);
+      inst.setColorAt(i,col.copy(cA).lerp(cB,Math.min(1,sp/1.1)));});
+    inst.instanceMatrix.needsUpdate=true; if(inst.instanceColor) inst.instanceColor.needsUpdate=true;
+    const sx=Math.sin(t*.25)*1.2, sz=Math.cos(t*.4)*.6, [vx,vz]=field(sx,sz,t); ship.position.set(sx,.04,sz); ship.rotation.y=Math.atan2(-vz,vx)*.6; ship.userData.radar.rotation.y=t*4;
+    g.rotation.y=Math.sin(t*.15)*.3; };
+})();
+
+/* ----- Cuatro juntas ----- */
+(function(){
+  const o=mk($('#cAll')); const {s,c}=o; c.position.set(4.2,3.6,4.8); c.lookAt(0,.9,0);
+  const {grp,layers}=makeStack(2.6); s.add(grp);
+  const pin=new T.Mesh(new T.CylinderGeometry(.02,.02,2.6,8),new T.MeshBasicMaterial({color:0xffffff})); pin.position.set(.5,1.2,.4); grp.add(pin);
+  const head=new T.Mesh(new T.SphereGeometry(.1,14,14),new T.MeshBasicMaterial({color:0xffffff})); head.position.set(.5,2.55,.4); grp.add(head);
+  const halo=new T.Mesh(new T.RingGeometry(.12,.17,32),new T.MeshBasicMaterial({color:0xffffff,transparent:true,side:T.DoubleSide})); halo.rotation.x=-Math.PI/2; halo.position.set(.5,.02,.4); grp.add(halo);
+  layerHook=()=>layers.forEach((L,i)=>L.target=on[i]?1:0);
+  layerHook();
+  o.tick=t=>{ layers.forEach((L,i)=>{ L.show+=(L.target-L.show)*.12; L.m.visible=L.show>.02; L.m.scale.set(.6+.4*L.show,1,.6+.4*L.show);
+      L.mats[0].opacity=.9*L.show; L.mats[1].opacity=(i===0?1:.88)*L.show; L.m.position.y=i*(.62+.08*Math.sin(t+i)); });
+    grp.rotation.y=t*.2; const q=(t*.7)%1; halo.scale.setScalar(1+q*3); halo.material.opacity=1-q; head.position.y=2.55+Math.sin(t*2)*.05; };
+})();
+
+/* ----- Ruta inferior: el buque que salta de estación en estación ----- */
+(function(){
+  const o=mk($('#voy3d'),{fov:30,always:true}); const {s,c}=o; c.position.set(0,1.4,10); c.lookAt(0,.2,0);
+  let VW=20; const baseY=-.72;
+  const ribbon=new T.PlaneGeometry(1,.7,160,1); const rp=ribbon.attributes.position, rb=rp.array.slice();
+  const water=new T.Mesh(ribbon,new T.MeshStandardMaterial({color:0x3fd2d8,transparent:true,opacity:.55,flatShading:true,side:T.DoubleSide})); water.position.y=baseY-.15; s.add(water);
+  const buoys=STATIONS.map(st=>{const b=makeBuoy(new T.Color(st.c||'#e8fbff')); b.scale.setScalar(.85); s.add(b); return b;});
+  const ship=makeShip(); ship.scale.setScalar(1.15); s.add(ship);
+  const drops=[...Array(16)].map(()=>{const m=new T.Mesh(new T.SphereGeometry(.07,6,6),new T.MeshBasicMaterial({color:0xcff8ff,transparent:true})); m.visible=false; s.add(m); return {m,v:new T.Vector3(),life:0};});
+  const X=i=>(frac(i)-.5)*VW;
+  o.onResize=(w,h)=>{ const d=c.position.length(); VW=2*Math.tan(c.fov*Math.PI/360)*d*c.aspect; water.scale.x=VW*1.1; buoys.forEach((b,i)=>b.position.x=X(i)); };
+  o.resize();
+  let from=0,to=0,t0=-10,dir=1; const JUMP=1.05;
+  onStation=(a,b)=>{ from=jumpX(); to=b; t0=now; dir=Math.sign(X(b)-from)||1; };
+  let now=0, lastX=X(0);
+  const jumpX=()=>lastX;
+  const splash=x=>drops.forEach(d=>{d.m.visible=true;d.life=1;d.m.position.set(x+(Math.random()-.5)*.6,baseY,(Math.random()-.5)*.4);d.v.set((Math.random()-.5)*2.5,2+Math.random()*2.5,(Math.random()-.5));});
+  let landed=true;
+  o.tick=t=>{ const dt=Math.min(.05,t-now); now=t;
+    for(let i=0;i<rp.count;i++){const x=rb[i*3]; rp.array[i*3+2]=Math.sin(x*14+t*2)*.04+Math.sin(x*31-t*3)*.02; rp.array[i*3+1]=rb[i*3+1]+Math.sin(x*22+t*2.4)*.05;} rp.needsUpdate=true;
+    buoys.forEach((b,i)=>{b.position.y=baseY+Math.sin(t*2+i)*.05; b.rotation.z=Math.sin(t*1.6+i)*.12; b.userData.lamp.material.color.setHSL(.13,1,i===current?.6+.3*Math.sin(t*6):.35);});
+    const p=reduce?1:Math.min(1,(t-t0)/JUMP), e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2, tx=X(to);
+    const x=from+(tx-from)*e, y=baseY+.05+Math.sin(Math.PI*p)*1.75;
+    if(p<1){landed=false;} else if(!landed){landed=true; splash(tx);}
+    lastX=p<1?x:tx;
+    ship.position.set(lastX, p<1?y:baseY+.05+Math.sin(t*2.2)*.05, .35);
+    ship.rotation.y=dir>0?-.35:Math.PI+.35; ship.rotation.z=p<1?Math.sin(Math.PI*p)*.6*(p<.5?1:-1)*.6:Math.sin(t*1.8)*.05;
+    ship.rotation.x=p<1?Math.sin(Math.PI*2*p)*.25:0; ship.userData.radar.rotation.y=t*5;
+    drops.forEach(d=>{ if(!d.m.visible) return; d.v.y-=9*dt; d.m.position.addScaledVector(d.v,dt); d.life-=dt*1.4; d.m.material.opacity=Math.max(0,d.life); if(d.life<=0||d.m.position.y<baseY-.4) d.m.visible=false; });
+  };
+})();
+
+/* ----- Bucle ----- */
+addEventListener('resize',()=>scenes.forEach(o=>o.resize()));
+const T0=performance.now();
+function frame(n){ const t=(n-T0)/1000; scenes.forEach(o=>{ if(o.vis||o.always){ o.tick&&o.tick(t); o.r.render(o.s,o.c);} }); if(!reduce) requestAnimationFrame(frame); }
+if(reduce){ scenes.forEach(o=>{o.tick&&o.tick(2); o.r.render(o.s,o.c);}); } else requestAnimationFrame(frame);
+pickStation();
+})();
+</script>
+</body>
+</html>
