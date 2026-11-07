@@ -16,7 +16,7 @@
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.65;-webkit-font-smoothing:antialiased;padding-bottom:120px;overflow-x:hidden;background:#04223d}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden;background:#04223d}
 img,video{max-width:100%;display:block}
 :focus-visible{outline:2px solid var(--s102);outline-offset:4px;border-radius:6px}
 .wrap{width:min(1200px,100% - 48px);margin-inline:auto;position:relative}
@@ -50,7 +50,7 @@ p{margin:0;max-width:60ch}
 .stat{padding:14px 20px;border-radius:22px;background:var(--glass);border:1px solid var(--edge);backdrop-filter:blur(10px);min-width:150px}
 .stat b{display:block;font-family:var(--display);font-size:2.6rem;line-height:1;font-weight:800}
 .stat span{font-size:.85rem;color:var(--muted)}
-.cue{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:#cfeaf2;text-decoration:none}
+.cue{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:#cfeaf2;text-decoration:none}
 .cue svg{animation:bob 2.2s ease-in-out infinite}
 @keyframes bob{50%{transform:translateY(8px)}}
 
@@ -374,11 +374,6 @@ dialog button{position:absolute;top:-48px;right:0;background:rgba(255,255,255,.0
 </section>
 </main>
 
-<nav class="voyage" aria-label="Recorrido">
-  <canvas id="voy3d" aria-hidden="true"></canvas>
-  <div class="now" id="now">Zarpando</div>
-  <div class="stations" id="stations"></div>
-</nav>
 
 <dialog id="viewer"><button type="button" id="closeV">Cerrar</button><video id="big" controls muted loop playsinline></video></dialog>
 
@@ -404,7 +399,7 @@ const STATIONS = [
 const secs = $$('[data-station]');
 const stEl = $('#stations');
 const frac = i => .06 + i*(.88/(STATIONS.length-1));
-STATIONS.forEach((s,i)=>{
+if(stEl) STATIONS.forEach((s,i)=>{
   const b=document.createElement('button'); b.className='st'; b.textContent=s.n; b.style.left=(frac(i)*100)+'%'; b.style.setProperty('--c',s.c);
   b.addEventListener('click',()=>secs[i].scrollIntoView({behavior:reduce?'auto':'smooth'})); stEl.appendChild(b);
 });
@@ -413,7 +408,7 @@ function pickStation(){
   let k=0; secs.forEach((s,i)=>{ if(s.getBoundingClientRect().top < innerHeight*.55) k=i; });
   if(k!==current){ const prev=current; current=k; onStation(prev,k); }
   $$('.st').forEach((b,i)=>b.classList.toggle('on',i===current));
-  $('#now').textContent = STATIONS[current].t;
+  
 }
 
 /* ---------- Profundidad y fondo ---------- */
@@ -661,39 +656,6 @@ function makeStack(size=3){
     const a=t*.45; vs.position.set(Math.cos(a)*.75,3*(.62+.08*Math.sin(t+3))+.05,Math.sin(a)*.75); vs.rotation.y=Math.atan2(-Math.cos(a),-Math.sin(a)); vs.userData.radar.rotation.y=t*4; };
 })();
 
-/* ----- Ruta inferior: el buque que salta de estación en estación ----- */
-(function(){
-  const o=mk($('#voy3d'),{fov:30,always:true}); const {s,c}=o; c.position.set(0,1.4,10); c.lookAt(0,.2,0);
-  let VW=20; const baseY=-.72;
-  const ribbon=new T.PlaneGeometry(1,.7,160,1); const rp=ribbon.attributes.position, rb=rp.array.slice();
-  const water=new T.Mesh(ribbon,new T.MeshStandardMaterial({color:0x3fd2d8,transparent:true,opacity:.55,flatShading:true,side:T.DoubleSide})); water.position.y=baseY-.15; s.add(water);
-  const buoys=STATIONS.map(st=>{const b=makeBuoy(new T.Color(st.c||'#e8fbff')); b.scale.setScalar(.85); s.add(b); return b;});
-  const ship=makeShip(); ship.scale.setScalar(1.15); s.add(ship);
-  const drops=[...Array(16)].map(()=>{const m=new T.Mesh(new T.SphereGeometry(.07,6,6),new T.MeshBasicMaterial({color:0xcff8ff,transparent:true})); m.visible=false; s.add(m); return {m,v:new T.Vector3(),life:0};});
-  const X=i=>(frac(i)-.5)*VW;
-  o.onResize=(w,h)=>{ const d=c.position.length(); VW=2*Math.tan(c.fov*Math.PI/360)*d*c.aspect; water.scale.x=VW*1.1; buoys.forEach((b,i)=>b.position.x=X(i)); };
-  o.resize();
-  let from=0,to=0,t0=-10,dir=1; const JUMP=1.05;
-  onStation=(a,b)=>{ from=jumpX(); to=b; t0=now; dir=Math.sign(X(b)-from)||1; };
-  let now=0, lastX=X(0);
-  const jumpX=()=>lastX;
-  const splash=x=>drops.forEach(d=>{d.m.visible=true;d.life=1;d.m.position.set(x+(Math.random()-.5)*.6,baseY,(Math.random()-.5)*.4);d.v.set((Math.random()-.5)*2.5,2+Math.random()*2.5,(Math.random()-.5));});
-  let landed=true;
-  o.tick=t=>{ const dt=Math.min(.05,t-now); now=t;
-    for(let i=0;i<rp.count;i++){const x=rb[i*3]; rp.array[i*3+2]=Math.sin(x*14+t*2)*.04+Math.sin(x*31-t*3)*.02; rp.array[i*3+1]=rb[i*3+1]+Math.sin(x*22+t*2.4)*.05;} rp.needsUpdate=true;
-    buoys.forEach((b,i)=>{b.position.y=baseY+Math.sin(t*2+i)*.05; b.rotation.z=Math.sin(t*1.6+i)*.12; b.userData.lamp.material.color.setHSL(.13,1,i===current?.6+.3*Math.sin(t*6):.35);});
-    const p=reduce?1:Math.min(1,(t-t0)/JUMP), e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2, tx=X(to);
-    const x=from+(tx-from)*e, y=baseY+.05+Math.sin(Math.PI*p)*1.75;
-    if(p<1){landed=false;} else if(!landed){landed=true; splash(tx);}
-    lastX=p<1?x:tx;
-    ship.position.set(lastX, p<1?y:baseY+.05+Math.sin(t*2.2)*.05, .35);
-    ship.rotation.y=dir>0?-.35:Math.PI+.35; ship.rotation.z=p<1?Math.sin(Math.PI*p)*.6*(p<.5?1:-1)*.6:Math.sin(t*1.8)*.05;
-    ship.rotation.x=p<1?Math.sin(Math.PI*2*p)*.25:0; ship.userData.radar.rotation.y=t*5;
-    drops.forEach(d=>{ if(!d.m.visible) return; d.v.y-=9*dt; d.m.position.addScaledVector(d.v,dt); d.life-=dt*1.4; d.m.material.opacity=Math.max(0,d.life); if(d.life<=0||d.m.position.y<baseY-.4) d.m.visible=false; });
-  };
-})();
-
-
 /* ----- Buque viajero: un solo buque que salta de escena en escena con el scroll ----- */
 (function(){
   const box=el=>el?el.getBoundingClientRect():null;
@@ -726,7 +688,7 @@ function makeStack(size=3){
     return {x,y,size:Math.hypot(x3-x,y3-y),dx:x2-x,dy:y2-y};
   }
   const sm=(a,b,x)=>{const u=Math.min(1,Math.max(0,(x-a)/(b-a)));return u*u*(3-2*u);};
-  const TILT=.5; let hd=0, ti=0, last=0;
+  const TILT=.5; let hd=0, ti=0, last=0; const st={x:0,y:0,s:0,vx:0,vy:0,p:0,face:1,init:false};
   const o={canvas:cv,r,s,c:cam,always:true,vis:true,resize:rs};
   o.tick=t=>{
     const dt=Math.min(.05,t-last); last=t;
@@ -734,22 +696,31 @@ function makeStack(size=3){
     let k=0; refs.forEach((y,i)=>{ if(y!==null&&y<=mid) k=i; }); if(refs[k]===null) k=0;
     let k1=k+1; while(k1<refs.length&&refs[k1]===null) k1++;
     let f=0; if(k1<refs.length&&refs[k]!==null&&refs[k]<=mid) f=(mid-refs[k])/(refs[k1]-refs[k]);
-    const e=sm(.28,.72,f);
+    const e=sm(.18,.82,f);
     let a=anchor(k,t), b=e>0&&k1<refs.length?anchor(k1,t):null, P;
     if(!a&&b){a=b;} if(!a){ship.visible=false;return;}
     const lift=Math.min(200,H*.24);
     const at=u=>({x:a.x+(b.x-a.x)*u, y:a.y+(b.y-a.y)*u-Math.sin(Math.PI*u)*lift, size:a.size+(b.size-a.size)*u});
     const flying=b&&e>0&&e<1;
     if(!b||e<=0) P=a; else if(e>=1) P=b; else { P=at(e); const n=at(Math.min(1,e+.015)); P.dx=n.x-P.x; P.dy=n.y-P.y; }
-    const size=Math.min(260,Math.max(38,P.size)), sc=size/1.8;
-    ship.visible=true; ship.scale.setScalar(sc);
-    const bob=flying?0:Math.sin(t*2.2)*1.5;
-    ship.position.set(P.x,-(P.y+bob),0);
-    const th=Math.atan2((-(P.dy||0))/Math.sin(TILT),P.dx||1);
-    let dlt=th-hd; while(dlt>Math.PI) dlt-=2*Math.PI; while(dlt<-Math.PI) dlt+=2*Math.PI; hd+=dlt*(flying?.25:.18);
-    ship.rotation.set(TILT,hd,flying?Math.sin(Math.PI*e)*.35:Math.sin(t*1.8)*.05);
+    const size=Math.min(260,Math.max(38,P.size));
+    if(!st.init){Object.assign(st,{x:P.x,y:P.y,s:size,init:true});}
+    const kp=1-Math.exp(-dt*(flying?6:11)), ox=st.x, oy=st.y;
+    st.x+=(P.x-st.x)*kp; st.y+=(P.y-st.y)*kp; st.s+=(size-st.s)*kp;
+    const idt=1/Math.max(dt,1e-3), kv=Math.min(1,dt*5);
+    st.vx+=((st.x-ox)*idt-st.vx)*kv; st.vy+=((st.y-oy)*idt-st.vy)*kv;
+    const moving=flying||Math.hypot(P.x-st.x,P.y-st.y)>size*.35;
+    let th;
+    if(moving){ if(Math.abs(st.vx)>30) st.face=st.vx>0?1:-1; th=st.face>0?-.32:Math.PI+.32; }
+    else { th=Math.atan2((-(P.dy||0))/Math.sin(TILT),P.dx||1); st.face=Math.cos(th)>=0?1:-1; }
+    let dlt=th-hd; while(dlt>Math.PI) dlt-=2*Math.PI; while(dlt<-Math.PI) dlt+=2*Math.PI; hd+=dlt*(1-Math.exp(-dt*4.5));
+    const pitchT=moving?Math.max(-.45,Math.min(.45,-st.vy/1100)):Math.sin(t*1.8)*.05;
+    st.p+=(pitchT-st.p)*(1-Math.exp(-dt*6));
+    const bob=moving?Math.sin(t*3)*1.2:Math.sin(t*2.2)*1.5;
+    ship.visible=true; ship.scale.setScalar(st.s/1.8); ship.position.set(st.x,-(st.y+bob),0);
+    ship.rotation.set(TILT,hd,st.p);
     ship.userData.radar.rotation.y=t*5;
-    if(flying&&!reduce){ const d=trail[ti++%trail.length]; d.life=1; d.m.visible=true; d.m.position.set(P.x-Math.cos(hd)*size*.45,-(P.y)+Math.sin(hd)*Math.sin(TILT)*size*.45,-1); d.base=size*.035; }
+    if(moving&&!reduce&&Math.hypot(st.vx,st.vy)>60){ const d=trail[ti++%trail.length]; d.life=1; d.m.visible=true; d.m.position.set(st.x-st.face*st.s*.5,-(st.y+st.s*.08),-1); d.base=st.s*.03; }
     trail.forEach(d=>{ if(!d.m.visible) return; d.life-=dt*1.6; d.m.material.opacity=Math.max(0,d.life*.6); d.m.scale.setScalar(Math.max(.1,d.base*(1.6-d.life))); if(d.life<=0) d.m.visible=false; });
   };
   scenes.push(o);
