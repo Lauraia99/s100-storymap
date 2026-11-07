@@ -138,7 +138,7 @@ figcaption{margin-top:16px;font-size:.85rem;color:var(--muted);padding-left:6px}
 .note{margin-top:14px;font-size:.92rem;color:var(--muted)}
 
 /* Pacífico */
-.duo{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:20px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:80px}
 .alerts{margin-top:40px;display:grid;gap:10px;max-width:760px}
 .al{display:flex;gap:14px;align-items:center;padding:12px 18px;border-radius:18px;background:var(--glass);border:1px solid var(--edge);font-size:.92rem;opacity:0;transform:translateX(-30px);transition:all .7s cubic-bezier(.2,.8,.2,1)}
 .in .al{opacity:1;transform:none}
@@ -189,6 +189,7 @@ dialog::backdrop{background:rgba(1,10,20,.9);backdrop-filter:blur(6px)}
 dialog video{width:100%;border-radius:18px}
 dialog button{position:absolute;top:-48px;right:0;background:rgba(255,255,255,.08);border:1px solid var(--edge);color:var(--ink);font:inherit;padding:6px 16px;border-radius:99px;cursor:pointer}
 
+.fleet{position:fixed;inset:0;width:100vw;height:100vh;z-index:25;pointer-events:none}
 .nogl .stage canvas,.nogl #voy3d{display:none}
 
 @media (max-width:900px){
@@ -469,6 +470,7 @@ renderPick();
 const T=window.THREE;
 let glOK=!!T; try{ if(T){const c=document.createElement('canvas'); glOK=!!(c.getContext('webgl')||c.getContext('experimental-webgl'));} }catch(e){glOK=false;}
 if(!glOK){document.documentElement.classList.add('nogl'); return;}
+const ANCH=[]; /* puntos donde se posa el buque viajero, uno por sección */
 
 const scenes=[];
 function mk(canvas,{fov=35,always=false}={}){
@@ -551,7 +553,7 @@ function makeStack(size=3){
   const pos=geo.attributes.position, base=pos.array.slice();
   const sea=new T.Mesh(geo,M(0x0f8aa3,{roughness:.5,metalness:.1})); s.add(sea);
   const {grp,layers}=makeStack(2.8); s.add(grp);
-  const ship=makeShip(); ship.scale.setScalar(.75); s.add(ship);
+  const ship=makeShip(); ship.scale.setScalar(.75); ship.visible=false; s.add(ship); ANCH[0]={o,ship,el:o.canvas};
   const buoys=[[css('--s101'),-5,2],[css('--s102'),5.5,-1],[css('--s111'),-2.5,-4]].map(([col,x,z])=>{const b=makeBuoy(new T.Color(col));b.position.set(x,0,z);s.add(b);return b;});
   let mx=0,my=0; addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5;},{passive:true});
   let narrow=false; o.onResize=(w,h)=>{narrow=w/h<1; grp.position.set(narrow?0:3.1,narrow?3.0:1.7,narrow?-3:0); grp.scale.setScalar(narrow?.62:1);};
@@ -581,7 +583,7 @@ function makeStack(size=3){
   const beamG=new T.ConeGeometry(.45,3,20,1,true); beamG.translate(0,-1.5,0); beamG.rotateZ(Math.PI/2);
   const beam=new T.Mesh(beamG,new T.MeshBasicMaterial({color:0xfff1a8,transparent:true,opacity:.22,side:T.DoubleSide,depthWrite:false,blending:T.AdditiveBlending}));
   beam.position.copy(lamp.position); g.add(beam);
-  const ship=makeShip(); ship.scale.setScalar(.45); g.add(ship);
+  const ship=makeShip(); ship.scale.setScalar(.45); ship.visible=false; g.add(ship); ANCH[2]={o,ship,el:o.canvas};
   o.tick=t=>{ g.rotation.y=Math.sin(t*.25)*.5; beam.rotation.y=t*1.4; const a=t*.4; ship.position.set(Math.cos(a)*1.1+.4,.1,Math.sin(a)*1.1+.5); ship.rotation.y=Math.atan2(-Math.cos(a),-Math.sin(a)); ship.userData.radar.rotation.y=t*4; };
 })();
 
@@ -597,7 +599,7 @@ function makeStack(size=3){
   geo.setAttribute('color',new T.Float32BufferAttribute(cols,3)); geo.computeVertexNormals();
   g.add(new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:.8})));
   g.add(new T.Mesh(geo,new T.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:.07})));
-  const ship=makeShip(); ship.scale.setScalar(.42); ship.position.y=.55; g.add(ship);
+  const ship=makeShip(); ship.scale.setScalar(.42); ship.position.y=.55; ship.visible=false; g.add(ship); ANCH[3]={o,ship,el:o.canvas};
   const coneG=new T.ConeGeometry(.55,1.6,28,1,true); coneG.translate(0,-.8,0);
   const sonar=new T.Mesh(coneG,new T.MeshBasicMaterial({color:0x3fe0b8,transparent:true,opacity:.18,side:T.DoubleSide,depthWrite:false,blending:T.AdditiveBlending})); g.add(sonar);
   const ring=new T.Mesh(new T.RingGeometry(.2,.26,40),new T.MeshBasicMaterial({color:0x3fe0b8,transparent:true,side:T.DoubleSide,depthWrite:false})); ring.rotation.x=-Math.PI/2; g.add(ring);
@@ -616,7 +618,7 @@ function makeStack(size=3){
   for(let k=0;k<12;k++){const tk=new T.Mesh(new T.BoxGeometry(k%4?.1:.2,.02,.14),M(0x0e2235)); tk.position.set(-.82+(k%4?0:.05),.2+k*.18,-.9); g.add(tk);}
   const pier=new T.Mesh(new T.BoxGeometry(1.4,.08,.4),M(0x9a6b45)); pier.position.set(-.4,2.0,-.9); g.add(pier);
   const buoy=makeBuoy(new T.Color(0xffc35a)); buoy.scale.setScalar(.9); buoy.position.set(.6,0,.4); g.add(buoy);
-  const ship=makeShip(); ship.scale.setScalar(.38); g.add(ship);
+  const ship=makeShip(); ship.scale.setScalar(.38); ship.visible=false; g.add(ship); ANCH[4]={o,ship,el:o.canvas};
   o.tick=t=>{ const h=1.05+.38*Math.sin(t*.7); water.scale.y=h; buoy.position.y=h-.08+Math.sin(t*2)*.03; buoy.rotation.z=Math.sin(t*1.7)*.15; buoy.userData.lamp.material.color.setHSL(.13,1,.55+.35*Math.sin(t*3));
     ship.position.set(.3+Math.sin(t*.3)*.5,h-.02,.95); ship.rotation.y=Math.cos(t*.3)>0?0:Math.PI; g.rotation.y=Math.sin(t*.2)*.35; };
 })();
@@ -631,7 +633,7 @@ function makeStack(size=3){
   const P=[...Array(N)].map(()=>({x:(Math.random()-.5)*3.4,z:(Math.random()-.5)*3.4,age:Math.random()*6}));
   const dmy=new T.Object3D(), col=new T.Color(), cA=new T.Color(0xff8c6e), cB=new T.Color(0xffe08a);
   const field=(x,z,t)=>[Math.cos(z*1.2+t*.2)*.55+.45, Math.sin(x*1.1+t*.15)*.5];
-  const ship=makeShip(); ship.scale.setScalar(.4); g.add(ship);
+  const ship=makeShip(); ship.scale.setScalar(.4); ship.visible=false; g.add(ship); ANCH[5]={o,ship,el:o.canvas};
   let last=0;
   o.tick=t=>{ const dt=Math.min(.05,t-last); last=t;
     P.forEach((q,i)=>{const [vx,vz]=field(q.x,q.z,t); q.x+=vx*dt*.6; q.z+=vz*dt*.6; q.age+=dt;
@@ -650,11 +652,13 @@ function makeStack(size=3){
   const pin=new T.Mesh(new T.CylinderGeometry(.02,.02,2.6,8),new T.MeshBasicMaterial({color:0xffffff})); pin.position.set(.5,1.2,.4); grp.add(pin);
   const head=new T.Mesh(new T.SphereGeometry(.1,14,14),new T.MeshBasicMaterial({color:0xffffff})); head.position.set(.5,2.55,.4); grp.add(head);
   const halo=new T.Mesh(new T.RingGeometry(.12,.17,32),new T.MeshBasicMaterial({color:0xffffff,transparent:true,side:T.DoubleSide})); halo.rotation.x=-Math.PI/2; halo.position.set(.5,.02,.4); grp.add(halo);
+  const vs=makeShip(); vs.scale.setScalar(.3); vs.visible=false; grp.add(vs); ANCH[6]={o,ship:vs,el:o.canvas};
   layerHook=()=>layers.forEach((L,i)=>L.target=on[i]?1:0);
   layerHook();
   o.tick=t=>{ layers.forEach((L,i)=>{ L.show+=(L.target-L.show)*.12; L.m.visible=L.show>.02; L.m.scale.set(.6+.4*L.show,1,.6+.4*L.show);
       L.mats[0].opacity=.9*L.show; L.mats[1].opacity=(i===0?1:.88)*L.show; L.m.position.y=i*(.62+.08*Math.sin(t+i)); });
-    grp.rotation.y=t*.2; const q=(t*.7)%1; halo.scale.setScalar(1+q*3); halo.material.opacity=1-q; head.position.y=2.55+Math.sin(t*2)*.05; };
+    grp.rotation.y=t*.2; const q=(t*.7)%1; halo.scale.setScalar(1+q*3); halo.material.opacity=1-q; head.position.y=2.55+Math.sin(t*2)*.05;
+    const a=t*.45; vs.position.set(Math.cos(a)*.75,3*(.62+.08*Math.sin(t+3))+.05,Math.sin(a)*.75); vs.rotation.y=Math.atan2(-Math.cos(a),-Math.sin(a)); vs.userData.radar.rotation.y=t*4; };
 })();
 
 /* ----- Ruta inferior: el buque que salta de estación en estación ----- */
@@ -687,6 +691,68 @@ function makeStack(size=3){
     ship.rotation.x=p<1?Math.sin(Math.PI*2*p)*.25:0; ship.userData.radar.rotation.y=t*5;
     drops.forEach(d=>{ if(!d.m.visible) return; d.v.y-=9*dt; d.m.position.addScaledVector(d.v,dt); d.life-=dt*1.4; d.m.material.opacity=Math.max(0,d.life); if(d.life<=0||d.m.position.y<baseY-.4) d.m.visible=false; });
   };
+})();
+
+
+/* ----- Buque viajero: un solo buque que salta de escena en escena con el scroll ----- */
+(function(){
+  const box=el=>el?el.getBoundingClientRect():null;
+  const pp=x=>{const u=((x%2)+2)%2; return u<1?u:2-u;}, dirOf=x=>(((x%2)+2)%2)<1?1:-1;
+  const lane=(sel,off)=>{const el=$(sel); return {el,fn:t=>{const rc=box(el); if(!rc||!rc.width) return null; const u=t*.05;
+    return {x:rc.left+rc.width*(.08+.84*pp(u)), y:rc.top+off+Math.sin(t*2)*3, size:Math.max(60,Math.min(120,rc.width*.09)), dx:dirOf(u), dy:-.25};}};};
+  ANCH[1]=lane('.stops',-34);
+  ANCH[7]=lane('#pacifico .duo',-34);
+  const cmp=$('.compass');
+  ANCH[8]={el:cmp,fn:t=>{const rc=box(cmp); if(!rc||!rc.width) return null; const cx=rc.left+rc.width/2, cy=rc.top+rc.height/2, R=Math.max(95,rc.width*.95), a=t*.45;
+    return {x:cx+Math.cos(a)*R, y:cy+Math.sin(a)*R*.42, size:80, dx:-Math.sin(a), dy:Math.cos(a)*.42};}};
+
+  const cv=document.createElement('canvas'); cv.className='fleet'; cv.setAttribute('aria-hidden','true'); document.body.appendChild(cv);
+  const r=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true}); r.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  const s=new T.Scene(), cam=new T.OrthographicCamera(0,1,0,-1,-3000,3000);
+  s.add(new T.HemisphereLight(0xd6f3ff,0x04223a,.85)); const dl=new T.DirectionalLight(0xffe0bd,.95); dl.position.set(.4,1,.9); s.add(dl);
+  const ship=makeShip(); s.add(ship);
+  const trail=[...Array(26)].map(()=>{const m=new T.Mesh(new T.CircleGeometry(1,12),new T.MeshBasicMaterial({color:0xd8fbff,transparent:true,opacity:0,depthWrite:false})); m.visible=false; s.add(m); return {m,life:0};});
+  let W=1,H=1; const rs=()=>{W=innerWidth;H=innerHeight;r.setSize(W,H);cam.right=W;cam.bottom=-H;cam.updateProjectionMatrix();}; rs(); addEventListener('resize',rs);
+  const V=()=>new T.Vector3(), v=V(), tmp=V(), ws=V(), q=new T.Quaternion();
+  const proj=(o,p)=>{const rc=o.canvas.getBoundingClientRect(); tmp.copy(p).project(o.c); return [rc.left+(tmp.x+1)/2*rc.width, rc.top+(1-tmp.y)/2*rc.height];};
+  function anchor(i,t){
+    const A=ANCH[i]; if(!A) return null;
+    if(!A.o) return A.fn(t);
+    const {o,ship:vs}=A; o.s.updateMatrixWorld(); o.c.updateMatrixWorld();
+    vs.getWorldPosition(v); vs.getWorldScale(ws); vs.getWorldQuaternion(q); const len=1.8*ws.x;
+    const [x,y]=proj(o,v);
+    const [x2,y2]=proj(o,V().set(1,0,0).applyQuaternion(q).multiplyScalar(len).add(v));
+    const [x3,y3]=proj(o,V().set(1,0,0).applyQuaternion(o.c.quaternion).multiplyScalar(len).add(v));
+    return {x,y,size:Math.hypot(x3-x,y3-y),dx:x2-x,dy:y2-y};
+  }
+  const sm=(a,b,x)=>{const u=Math.min(1,Math.max(0,(x-a)/(b-a)));return u*u*(3-2*u);};
+  const TILT=.5; let hd=0, ti=0, last=0;
+  const o={canvas:cv,r,s,c:cam,always:true,vis:true,resize:rs};
+  o.tick=t=>{
+    const dt=Math.min(.05,t-last); last=t;
+    const mid=H/2, refs=ANCH.map(A=>{const rc=A&&box(A.el); return rc&&rc.height?rc.top+rc.height/2:null;});
+    let k=0; refs.forEach((y,i)=>{ if(y!==null&&y<=mid) k=i; }); if(refs[k]===null) k=0;
+    let k1=k+1; while(k1<refs.length&&refs[k1]===null) k1++;
+    let f=0; if(k1<refs.length&&refs[k]!==null&&refs[k]<=mid) f=(mid-refs[k])/(refs[k1]-refs[k]);
+    const e=sm(.28,.72,f);
+    let a=anchor(k,t), b=e>0&&k1<refs.length?anchor(k1,t):null, P;
+    if(!a&&b){a=b;} if(!a){ship.visible=false;return;}
+    const lift=Math.min(200,H*.24);
+    const at=u=>({x:a.x+(b.x-a.x)*u, y:a.y+(b.y-a.y)*u-Math.sin(Math.PI*u)*lift, size:a.size+(b.size-a.size)*u});
+    const flying=b&&e>0&&e<1;
+    if(!b||e<=0) P=a; else if(e>=1) P=b; else { P=at(e); const n=at(Math.min(1,e+.015)); P.dx=n.x-P.x; P.dy=n.y-P.y; }
+    const size=Math.min(260,Math.max(38,P.size)), sc=size/1.8;
+    ship.visible=true; ship.scale.setScalar(sc);
+    const bob=flying?0:Math.sin(t*2.2)*1.5;
+    ship.position.set(P.x,-(P.y+bob),0);
+    const th=Math.atan2((-(P.dy||0))/Math.sin(TILT),P.dx||1);
+    let dlt=th-hd; while(dlt>Math.PI) dlt-=2*Math.PI; while(dlt<-Math.PI) dlt+=2*Math.PI; hd+=dlt*(flying?.25:.18);
+    ship.rotation.set(TILT,hd,flying?Math.sin(Math.PI*e)*.35:Math.sin(t*1.8)*.05);
+    ship.userData.radar.rotation.y=t*5;
+    if(flying&&!reduce){ const d=trail[ti++%trail.length]; d.life=1; d.m.visible=true; d.m.position.set(P.x-Math.cos(hd)*size*.45,-(P.y)+Math.sin(hd)*Math.sin(TILT)*size*.45,-1); d.base=size*.035; }
+    trail.forEach(d=>{ if(!d.m.visible) return; d.life-=dt*1.6; d.m.material.opacity=Math.max(0,d.life*.6); d.m.scale.setScalar(Math.max(.1,d.base*(1.6-d.life))); if(d.life<=0) d.m.visible=false; });
+  };
+  scenes.push(o);
 })();
 
 /* ----- Bucle ----- */
