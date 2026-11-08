@@ -256,8 +256,8 @@ dialog button{position:absolute;top:-48px;right:0;background:rgba(255,255,255,.0
   <div class="wrap std-grid">
     <div class="std-head rv">
       <span class="code" data-t="S-101">S-101</span>
-      <h2>La carta, <em>hecha en casa</em></h2>
-      <p class="intro">Es la carta náutica electrónica: la superficie sobre la que se despliegan todas las demás capas. La obtenemos desde S-57 con un pipeline propio de extracción, reglas S-101 y compilación ISO 8211.</p>
+      <h2>Hecha en casa, <em>pero no bastaba</em></h2>
+      <p class="intro">Con nuestra carta S-101 lista, cargamos el nivel del mar en S-104 y descubrimos que la carta no era suficiente. S-104 no se dibuja por sí solo en pantalla: su información se expresa ajustando la profundidad del fondo. Para verlo hacía falta también la batimetría en S-102.</p>
       <span class="chip">Carta náutica electrónica</span>
     </div>
     <div class="stage rv d1"><canvas id="c101" aria-hidden="true"></canvas><span class="hint">Carta · isla · faro</span></div>
@@ -271,7 +271,7 @@ dialog button{position:absolute;top:-48px;right:0;background:rgba(255,255,255,.0
     <div class="std-head rv">
       <span class="code" data-t="S-102">S-102</span>
       <h2>El fondo, <em>en alta definición</em></h2>
-      <p class="intro">La batimetría describe el fondo con una grilla de profundidades más fina que la de la carta. En ShoreECDIS aparece como un relieve sombreado bajo los símbolos, y cada celda se puede consultar.</p>
+      <p class="intro">Convertimos la batimetría de la Bahía de Cartagena al estándar S-102, en formato HDF5, con la misma librería s100py de la primera parte. El resultado es una grilla de profundidades más fina que la de la carta, que en ShoreECDIS se consulta celda por celda.</p>
       <span class="chip">Batimetría de superficie</span>
     </div>
     <div class="stage rv d1"><canvas id="c102" aria-hidden="true"></canvas><span class="hint">Relieve del fondo · sonar</span></div>
@@ -284,7 +284,7 @@ dialog button{position:absolute;top:-48px;right:0;background:rgba(255,255,255,.0
     <div class="std-head rv">
       <span class="code" data-t="S-104">S-104</span>
       <h2>El agua <em>sube y baja</em></h2>
-      <p class="intro">El nivel del mar fue el bloqueo de la Parte 1: necesitaba una carta S-101 para mostrarse. Con nuestra carta como base, el pronóstico ya tiene dónde desplegarse, y el sistema lo combina con la batimetría.</p>
+      <p class="intro">Con la carta y la batimetría en su lugar, el nivel del mar en S-104 por fin se hizo visible a través del Pick Report. Al consultar un punto, el sistema suma el nivel a la profundidad de S-102 y entrega la profundidad ajustada.</p>
       <div class="eq" id="eq">
         <div class="t"><b data-num="23.37">0,00</b><small>m · profundidad S-102</small></div><span class="op">+</span>
         <div class="t"><b data-num="0.04">0,00</b><small>m · nivel S-104</small></div><span class="op">=</span>
